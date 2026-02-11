@@ -8,6 +8,7 @@
 
 * **Mahmoud Mohamed Ahmed [Team Lead]** – **Infrastructure & Orchestration**
 * **Ahmed Shiref** – **CI/CD & Automation**
+* **Youssef Ayman** – **Terraform scripts for cloud services**
 * **Huda Atef** – **Backend & Containerization**
 
 ---
