@@ -8,7 +8,7 @@
 
 * **Mahmoud Mohamed Ahmed [Team Lead]** – **Infrastructure & Orchestration**
 * **Ahmed Shiref** – **CI/CD & Automation**
-* **Huda** – **Backend & Containerization**
+* **Huda Atef** – **Backend & Containerization**
 
 ---
 
