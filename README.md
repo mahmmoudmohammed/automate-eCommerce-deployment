@@ -1,2 +1,14 @@
-# automate-eCommerce-deployment
-Deploy a multi-service e-commerce platform (web, database, payment, search) with automated CI/CD, containerization, monitoring, and infrastructure provisioning. Focus on DevOps pipelines, scaling, and reliability
+**Project:** Automated E-Commerce Deployment Platform
+
+**Overview:** Building a high-availability, zero-downtime infrastructure to automate the deployment and scaling of e-commerce microservices using modern DevOps practices.
+
+---
+
+### **The Team**
+
+* **Mahmoud Mohamed Ahmed [Team Lead]** – **Infrastructure & Orchestration**
+* **Ahmed Shiref** – **CI/CD & Automation**
+* **Huda** – **Backend & Containerization**
+
+---
+
