@@ -1,10 +1,10 @@
-# 🚀 Automated E-Commerce Deployment Platform
+# Automated E-Commerce Deployment Platform
 
 **Overview:** Building a high-availability, zero-downtime infrastructure to automate the deployment and scaling of e-commerce microservices using modern DevOps practices.
 
 ---
 
-## 👥 The Team
+## The Team
 
 * **Mahmoud Mohamed Ahmed [Team Lead]** – **Infrastructure & Orchestration**
 * **Ahmed Shiref** – **CI/CD & Automation**
@@ -13,7 +13,7 @@
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 The project is structured into multiple services:
 - **Frontend**: React-based UI.
@@ -25,7 +25,7 @@ The project is structured into multiple services:
 
 ---
 
-## 💻 Getting Started (Local Development)
+## Getting Started (Local Development)
 
 Follow these steps to set up the project locally on your machine so everyone is on the same page.
 
@@ -39,7 +39,7 @@ Make sure you have the following installed on your local machine:
 ### Step 1: Clone the Repository
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/mahmmoudmohammed/automate-eCommerce-deployment.git
 cd automate-eCommerce-deployment
 ```
 
@@ -47,13 +47,6 @@ cd automate-eCommerce-deployment
 
 Since the entire application is completely containerized for local development, you only need to run a single command to spin up all 6 services (`frontend`, `backend`, `worker`, `nginx`, `postgres`, `redis`).
 
-```bash
-docker-compose up --build
-```
-
-> **Note:** The `--build` flag ensures that the Docker images are built from scratch, grabbing the latest `package.json` dependencies. After the first time, you can usually just run `docker-compose up`.
-
-If you prefer to run it in detached mode (background), use:
 ```bash
 docker-compose up -d --build
 ```
@@ -66,20 +59,18 @@ Once the containers are successfully running without errors, open your browser a
 
 ### Step 4: Stopping the Application
 
-To shut down all running containers securely, press `Ctrl + C` in your terminal or open a new terminal in the project directory and run:
-
 ```bash
-docker-compose down
+docker-compose stop
 ```
 
 ---
 
-## 🛠️ Development Workflow & Hot-Reloading
+## Development Workflow & Hot-Reloading
 
 Thanks to Docker volumes in `docker-compose.yml`, your local development directories are mapped straight into the containers:
 
-- **Hot Reloading:** Any changes you make to the code inside `./frontend/src`, `./backend/src`, or `./worker/src` will automatically trigger a local hot-reload inside the Docker container. No manual restarts required!
-- **Node Modules:** The `node_modules` folders reside separately inside the Docker environment. If you install a **new** dependency (e.g. `npm install axios` inside `/frontend`), you must rebuild the containers to pick it up:
+- **Hot Reloading:** Any changes you make to the code inside `./*/src` will automatically trigger. No manual restarts required.
+- **Node Modules:** If you install a new dependency (e.g. `npm install ZZZZ`) inside any microservice, you must rebuild its container.
   
   ```bash
   docker-compose down
@@ -88,8 +79,9 @@ Thanks to Docker volumes in `docker-compose.yml`, your local development directo
 
 ---
 
-## 📋 Git Workflow Guidelines
+## Git Workflow Guidelines
 
-1. **Pull the latest changes:** Always run `git pull origin main` before starting new work.
-2. **Review your diff:** Ensure no extra debug lines are mixed in.
+1. **Pull the latest changes:** Always run `git pull origin dev` before any action on your local machine.
+2. **Review your diff:** Ensure no Conflicts or errors with remote repository.
 3. **Commit & Push:** Once running perfectly locally, push up to the remote repository.
+4. **Create a Pull Request:** Once your changes are ready to be merged to dev branch and ensure no conflicts,
