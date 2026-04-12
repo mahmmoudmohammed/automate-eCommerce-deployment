@@ -1,16 +1,589 @@
-.App {
+/* =============================================================
+   App.css — Authentication UI Design System
+   Clean · Minimalist · Responsive · Dark mode
+   ============================================================= */
+
+/* ── 1. Design Tokens ──────────────────────────────────────── */
+:root {
+  /* Colors */
+  --clr-bg:           #0d0d14;
+  --clr-surface:      #16162a;
+  --clr-surface-2:    #1e1e38;
+  --clr-border:       rgba(255 255 255 / 0.08);
+  --clr-border-focus: #6c63ff;
+
+  --clr-primary:      #6c63ff;
+  --clr-primary-hov:  #574fd6;
+  --clr-primary-glow: rgba(108 99 255 / 0.28);
+
+  --clr-text:         #e8e8f5;
+  --clr-muted:        #7878a0;
+  --clr-white:        #ffffff;
+
+  --clr-error:        #ff6b6b;
+  --clr-error-bg:     rgba(255 107 107 / 0.10);
+  --clr-success:      #4ecb7d;
+  --clr-success-bg:   rgba(78 203 125 / 0.10);
+  --clr-warning:      #f59e0b;
+
+  /* Spacing */
+  --space-xs:  0.4rem;
+  --space-sm:  0.75rem;
+  --space-md:  1.25rem;
+  --space-lg:  2rem;
+  --space-xl:  3rem;
+
+  /* Shape */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  /* Typography */
+  --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Motion */
+  --ease:      cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast:  150ms;
+  --dur-base:  220ms;
+  --dur-slow:  350ms;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0 0 0 / 0.30);
+  --shadow-md: 0 8px 24px rgba(0 0 0 / 0.45);
+  --shadow-lg: 0 20px 60px rgba(0 0 0 / 0.55);
+}
+
+/* ── 2. Base Reset ─────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--clr-bg);
+  color: var(--clr-text);
+  line-height: 1.6;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── 3. Auth Page Layout ───────────────────────────────────── */
+.auth-page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-lg) var(--space-md);
+
+  /* Subtle radial background glow */
+  background:
+    radial-gradient(ellipse 70% 60% at 50% -10%, rgba(108 99 255 / 0.12) 0%, transparent 70%),
+    var(--clr-bg);
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  animation: slideUp var(--dur-slow) var(--ease) both;
+}
+
+/* ── 4. Branding block ─────────────────────────────────────── */
+.auth-brand {
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.auth-logo {
+  font-size: 2.25rem;
+  margin-bottom: var(--space-sm);
+  filter: drop-shadow(0 0 14px var(--clr-primary-glow));
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
+.auth-title {
+  font-size: clamp(1.5rem, 4vw, 1.85rem);
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--clr-white);
+  line-height: 1.2;
+}
+
+.auth-subtitle {
+  margin-top: var(--space-xs);
+  color: var(--clr-muted);
+  font-size: 0.9rem;
+}
+
+/* ── 5. Alert banners ──────────────────────────────────────── */
+.alert {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  animation: fadeDown var(--dur-base) var(--ease) both;
+  border: 1px solid transparent;
+}
+
+.alert-icon {
+  font-style: normal;
+  flex-shrink: 0;
+}
+
+.alert--error {
+  background: var(--clr-error-bg);
+  color: var(--clr-error);
+  border-color: rgba(255 107 107 / 0.22);
+}
+
+.alert--success {
+  background: var(--clr-success-bg);
+  color: var(--clr-success);
+  border-color: rgba(78 203 125 / 0.22);
+}
+
+/* ── 6. Form card ──────────────────────────────────────────── */
+.auth-form {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  box-shadow: var(--shadow-md);
+  transition: box-shadow var(--dur-base) var(--ease);
+}
+
+.auth-form:focus-within {
+  box-shadow: var(--shadow-lg);
+}
+
+/* ── 7. Form groups & inputs ───────────────────────────────── */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.form-group label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--clr-muted);
+  transition: color var(--dur-fast) var(--ease);
+}
+
+/* Label row for password + forgot link */
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.forgot-link {
+  font-size: 0.78rem;
+  color: var(--clr-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--dur-fast) var(--ease);
+}
+.forgot-link:hover { color: var(--clr-white); }
+
+/* Base input */
+.form-group input {
+  width: 100%;
+  padding: 0.7rem 0.95rem;
+  background: var(--clr-bg);
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  color: var(--clr-text);
+  font-size: 0.95rem;
+  font-family: var(--font-sans);
+  outline: none;
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.form-group input::placeholder {
+  color: rgba(255 255 255 / 0.18);
+}
+
+.form-group input:hover {
+  border-color: rgba(255 255 255 / 0.15);
+}
+
+.form-group input:focus {
+  border-color: var(--clr-border-focus);
+  box-shadow: 0 0 0 3px var(--clr-primary-glow);
+  background: var(--clr-surface-2);
+}
+
+/* Validation state — error */
+.field-error label { color: var(--clr-error); }
+.field-error input {
+  border-color: var(--clr-error) !important;
+  box-shadow: 0 0 0 3px rgba(255 107 107 / 0.15) !important;
+}
+
+/* Validation state — valid */
+.field-valid input {
+  border-color: var(--clr-success);
+}
+
+/* Field hint (inline validation message) */
+.field-hint {
+  font-size: 0.78rem;
+  margin-top: 2px;
+  display: block;
+  animation: fadeDown var(--dur-fast) var(--ease) both;
+}
+
+.field-hint--error { color: var(--clr-error); }
+
+/* Input wrapper for show/hide button */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrapper input {
+  flex: 1;
+  padding-right: 2.5rem;
+}
+
+.toggle-pw {
+  position: absolute;
+  right: 0.6rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.05rem;
+  line-height: 1;
+  padding: 0.2rem 0.3rem;
+  border-radius: 4px;
+  color: var(--clr-muted);
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+
+.toggle-pw:hover {
+  color: var(--clr-text);
+  background: rgba(255 255 255 / 0.06);
+}
+
+/* ── 8. Password strength meter ────────────────────────────── */
+.strength-meter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+}
+
+.strength-bars {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.strength-bar {
+  height: 3px;
+  flex: 1;
+  border-radius: var(--radius-pill);
+  background: rgba(255 255 255 / 0.1);
+  transition: background var(--dur-base) var(--ease);
+}
+
+.strength-weak    { background: var(--clr-error); }
+.strength-fair    { background: var(--clr-warning); }
+.strength-good    { background: #3abff8; }
+.strength-strong  { background: var(--clr-success); }
+
+.strength-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 44px;
+  text-align: right;
+}
+
+/* ── 9. Submit button ──────────────────────────────────────── */
+.auth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: 0.8rem 1rem;
+  margin-top: var(--space-xs);
+  background: var(--clr-primary);
+  color: var(--clr-white);
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  letter-spacing: 0.2px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  min-height: 46px;
+  transition:
+    background var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease),
+    opacity var(--dur-fast) var(--ease);
+}
+
+.auth-btn:hover:not(:disabled) {
+  background: var(--clr-primary-hov);
+  box-shadow: 0 4px 20px var(--clr-primary-glow);
+  transform: translateY(-1px);
+}
+
+.auth-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.auth-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── 10. Spinner ───────────────────────────────────────────── */
+.spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255 255 255 / 0.3);
+  border-top-color: var(--clr-white);
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+}
+
+.spinner--sm {
+  width: 14px;
+  height: 14px;
+}
+
+/* ── 11. Auth switch link ──────────────────────────────────── */
+.auth-switch {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--clr-muted);
+}
+
+.auth-switch a {
+  color: var(--clr-primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.auth-switch a:hover { color: var(--clr-white); }
+
+/* ── 12. Logout button (reusable) ──────────────────────────── */
+.logout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: 0.65rem 1.4rem;
+  background: transparent;
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  color: var(--clr-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.logout-btn:hover:not(:disabled) {
+  background: var(--clr-error-bg);
+  border-color: rgba(255 107 107 / 0.35);
+  color: var(--clr-error);
+  transform: translateX(2px);
+}
+
+.logout-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.logout-icon {
+  font-size: 1rem;
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.logout-btn:hover .logout-icon {
+  transform: translateX(3px);
+}
+
+/* ── 13. Dashboard ─────────────────────────────────────────── */
+.dashboard-page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-lg) var(--space-md);
+  background:
+    radial-gradient(ellipse 70% 60% at 50% -10%, rgba(108 99 255 / 0.10) 0%, transparent 70%),
+    var(--clr-bg);
+}
+
+.dashboard-card {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl) var(--space-lg);
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: var(--shadow-md);
+  animation: slideUp var(--dur-slow) var(--ease) both;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.dashboard-avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--clr-primary), #a78bfa);
+  color: var(--clr-white);
+  font-size: 1.6rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-sm);
+  box-shadow: 0 0 0 4px rgba(108 99 255 / 0.2);
+  user-select: none;
+}
+
+.dashboard-greeting {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--clr-white);
+}
+
+.dashboard-email {
+  color: var(--clr-muted);
+  font-size: 0.9rem;
+}
+
+.dashboard-meta {
+  color: var(--clr-muted);
+  font-size: 0.8rem;
+}
+
+/* Info pills */
+.info-pills {
+  display: flex;
+  gap: var(--space-sm);
+  margin: var(--space-sm) 0 var(--space-md);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pill {
+  padding: 0.3rem 0.8rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+}
+
+.pill--green {
+  background: var(--clr-success-bg);
+  color: var(--clr-success);
+  border: 1px solid rgba(78 203 125 / 0.2);
+}
+
+.pill--blue {
+  background: rgba(99 179 255 / 0.1);
+  color: #63b3ff;
+  border: 1px solid rgba(99 179 255 / 0.2);
+}
+
+.dashboard-logout {
+  width: 100%;
+  margin-top: var(--space-sm);
+}
+
+/* ── 14. Animations ────────────────────────────────────────── */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15%       { transform: translateX(-8px); }
+  30%       { transform: translateX(8px); }
+  45%       { transform: translateX(-6px); }
+  60%       { transform: translateX(6px); }
+  75%       { transform: translateX(-4px); }
+  90%       { transform: translateX(4px); }
+}
+
+.form-shake {
+  animation: shake 0.55s var(--ease) both;
+}
+
+/* ── 15. Responsive ────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .auth-form {
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
   }
+
+  .dashboard-card {
+    padding: var(--space-lg) var(--space-md);
+  }
+
+  .auth-title { font-size: 1.5rem; }
+}
+
+/* ── 16. Legacy App styles (kept for OtherPage etc.) ───────── */
+.App { text-align: center; }
+
+.App-logo { height: 40vmin; pointer-events: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo { animation: App-logo-spin infinite 20s linear; }
 }
 
 .App-header {
@@ -24,15 +597,9 @@
   color: white;
 }
 
-.App-link {
-  color: #61dafb;
-}
+.App-link { color: #61dafb; }
 
 @keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
