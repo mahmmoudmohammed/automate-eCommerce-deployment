@@ -1,20 +1,47 @@
-# Automated E-Commerce Deployment Platform
+### Project Name:
+Automated E-Commerce Deployment Platform
 
-**Overview:** Building a high-availability, zero-downtime infrastructure to automate the deployment and scaling of e-commerce microservices using modern DevOps practices.
+### Project Idea:
+Building a high-availability, zero-downtime infrastructure to automate the deployment and scaling of e-commerce microservices using modern DevOps practices.
 
----
 
-## The Team
+### Team member
 
-* **Mahmoud Mohamed Ahmed [Team Lead]** – **Infrastructure & Orchestration**
-* **Ahmed Shiref** – **CI/CD & Automation**
-* **Youssef Ayman** – **Terraform scripts for cloud services**
-* **Huda Atef** – **Backend & Containerization**
+- **Mahmoud Mohamed Ahmed [Team Lead]** – **Infrastructure & Orchestration**
+- **Ahmed Shiref** – **development & Containerization**
+- **Youssef Ayman** – **Terraform scripts & cloud services**
+- **Huda Atef** – **CI/CD & Automation**
 
----
 
-## Architecture
+### Project Plan
+1. Analysis & Service design
+2. Design & Implement Infrastructure & Orchestration
+3. Implement CI/CD pipeline
+5. Implement Backend features
+6. Implement Frontend features
+4. Deploy to staging environment
+5. End-t-End Testing
+6. Deploy to production
+6. Final Presentation
 
+
+## Roles & Responsibilities
+- Team Lead `Mahmoud`: Responsible for the overall project design,
+- Infrastructure & Orchestration `Mahmoud`: Responsible for the deployment and management of the infrastructure,
+- CI/CD & Automation `Huda`: Responsible for the implementation of CI/CD pipelines,
+- Development & Containerization `Sherif`: Responsible for the development of the services.
+- Terraform scripts & Cloud services `Youssef`: Responsible for the deployment of cloud services,
+
+### KPIs – Metrics
+- **Performance:** The time it takes for a user to interact with the application.
+- **Scalability:** The ability to handle increased traffic.
+- **Reliability:** The ability to handle failures.
+- **Cost:** The cost of running the application.
+
+### Instructor
+- **Eng.Ahmed Gamil**
+
+## Project Files
 The project is structured into multiple services:
 - **Frontend**: React-based UI.
 - **Backend / API**: Express-based Node.js API service handling business logic.
