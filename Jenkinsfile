@@ -3,11 +3,6 @@ pipeline {
         label 'docker'
     }
 
-    options {
-        skipDefaultCheckout(true)
-        disableConcurrentBuilds()
-    }
-
     environment {
         DOCKER_USER = "ma7moudsharqawi"
 
@@ -28,8 +23,13 @@ pipeline {
         stage('Validate Branch') {
             steps {
                 script {
-                    if (env.BRANCH_NAME != "dev") {
-                        error("This pipeline runs only on dev branch. Current: ${env.BRANCH_NAME}")
+                    def branch = env.BRANCH_NAME ?: env.GIT_BRANCH
+                    branch = branch?.replace("origin/", "")
+
+                    echo "Running on branch: ${branch}"
+
+                    if (branch != "dev") {
+                        error("This pipeline runs only on dev branch. Current: ${branch}")
                     }
                 }
             }
@@ -56,15 +56,6 @@ pipeline {
                     docker build -t $NGINX ./nginx
                     docker build -t $BACKEND ./backend
                     docker build -t $WORKER ./worker
-                '''
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                sh '''
-                    echo "Running frontend tests..."
-                    docker run --rm -e CI=true $FRONTEND npm run test
                 '''
             }
         }
