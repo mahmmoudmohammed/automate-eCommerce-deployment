@@ -1,0 +1,74 @@
+Setup Jenkins
+    Install plugins:
+    In Jenkins:
+        Git plugin
+        Pipeline plugin
+        Docker Pipeline plugin
+
+    Add Docker Hub credentials
+    Go to:
+        Manage Jenkins → Credentials
+
+    Add:
+        Kind: Username + Password
+        ID: docker-hub-creds
+        Username: Docker Hub username
+        Password: Docker Hub token/password(prefered token for more secure)
+
+Create Pipeline Job
+    New Item → Pipeline
+    Name: docker-ci
+
+    Configure:
+        Pipeline script from SCM
+        SCM: Git
+        Repo URL: your GitHub repo
+
+Run Jenkins locally
+    Open: http://localhost:8080
+
+Expose Jenkins using ngrok
+    Start ngrok: In teminal write ngrok http 8080
+
+    You’ll get:
+        Forwarding https://abc123.ngrok.io -> http://localhost:8080
+
+Configure Jenkins URL
+    In Jenkins: Manage Jenkins → Configure System
+
+    Set:
+        Jenkins URL = https://abc123.ngrok.io
+
+Create GitHub webhook
+    Go to your repo on GitHub:
+        Settings → Webhooks → Add Webhook
+
+    Use:
+        https://abc123.ngrok.io/github-webhook/
+        Content type: application/json
+        Event: Push
+
+Enable webhook trigger in Jenkins
+    In your job config:
+        ✔ Enable:
+            GitHub hook trigger for GITScm polling
+
+Test the integration
+    Push code:
+        git add .
+        git commit -m "test webhook"
+        git push
+
+Watch it live
+    Open Jenkins via ngrok URL
+    You should see:
+        Build triggered automatically
+
+Important notes
+    ngrok URL changes
+        Every time you restart ngrok, the URL changes.
+
+    Fix:
+        Update webhook each time
+        OR
+        Use paid ngrok for fixed domain
