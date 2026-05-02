@@ -52,6 +52,7 @@ pipeline {
         stage('Build Images') {
             steps {
                 sh '''
+                    docker context use desktop-linux
                     docker build -t $FRONTEND ./frontend
                     docker build -t $NGINX ./nginx
                     docker build -t $BACKEND ./backend
