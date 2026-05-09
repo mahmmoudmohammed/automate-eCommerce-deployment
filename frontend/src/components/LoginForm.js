@@ -15,6 +15,7 @@ const LoginForm = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [shake, setShake] = useState(false);
+  const errorId = apiError ? "login-error" : undefined;
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -28,6 +29,8 @@ const LoginForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (loading) return;
 
     // Basic client‑side guard
     if (!form.email || !form.password) {
@@ -66,7 +69,7 @@ const LoginForm = () => {
 
         {/* ── Error alert ── */}
         {apiError && (
-          <div className="alert alert--error" role="alert">
+          <div className="alert alert--error" role="alert" id="login-error">
             <span className="alert-icon">⚠</span> {apiError}
           </div>
         )}
@@ -88,6 +91,9 @@ const LoginForm = () => {
               onChange={handleChange}
               placeholder="you@example.com"
               autoComplete="email"
+              disabled={loading}
+              aria-invalid={!!apiError}
+              aria-describedby={errorId}
               required
             />
           </div>
@@ -109,12 +115,16 @@ const LoginForm = () => {
                 onChange={handleChange}
                 placeholder="••••••••"
                 autoComplete="current-password"
+                disabled={loading}
+                aria-invalid={!!apiError}
+                aria-describedby={errorId}
                 required
               />
               <button
                 type="button"
                 className="toggle-pw"
                 onClick={() => setShowPassword((s) => !s)}
+                disabled={loading}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? "🙈" : "👁"}
@@ -128,7 +138,8 @@ const LoginForm = () => {
             disabled={loading}
             aria-busy={loading}
           >
-            {loading ? <span className="spinner" aria-hidden="true" /> : "Sign In"}
+            {loading && <span className="spinner" aria-hidden="true" />}
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
 

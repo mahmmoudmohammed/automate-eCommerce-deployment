@@ -52,7 +52,7 @@ const Field = ({ id, label, error, touched, children }) => (
     <label htmlFor={id}>{label}</label>
     {children}
     {touched && error && (
-      <span className="field-hint field-hint--error" role="alert">
+      <span className="field-hint field-hint--error" role="alert" id={`${id}-error`}>
         {error}
       </span>
     )}
@@ -116,11 +116,10 @@ const RegisterForm = () => {
     setFieldErrors((prev) => ({ ...prev, [name]: validate(name, value) }));
   };
 
-  const isFormValid = () =>
-    Object.keys(validators).every((k) => !validate(k, form[k]));
-
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (loading) return;
 
     // Touch all fields to show all errors
     const allTouched = Object.keys(form).reduce((a, k) => ({ ...a, [k]: true }), {});
@@ -153,6 +152,7 @@ const RegisterForm = () => {
   };
 
   const strength = getStrength(form.password);
+  const apiErrorId = apiError ? "register-error" : undefined;
 
   return (
     <div className="auth-page">
@@ -166,7 +166,7 @@ const RegisterForm = () => {
 
         {/* ── Alerts ── */}
         {apiError && (
-          <div className="alert alert--error" role="alert">
+          <div className="alert alert--error" role="alert" id="register-error">
             <span className="alert-icon">⚠</span> {apiError}
           </div>
         )}
@@ -195,7 +195,9 @@ const RegisterForm = () => {
               onBlur={handleBlur}
               placeholder="John Doe"
               autoComplete="name"
-              aria-describedby={fieldErrors.name ? "reg-name-err" : undefined}
+              disabled={loading}
+              aria-invalid={!!(touched.name && fieldErrors.name)}
+              aria-describedby={touched.name && fieldErrors.name ? "reg-name-error" : apiErrorId}
             />
           </Field>
 
@@ -215,6 +217,9 @@ const RegisterForm = () => {
               onBlur={handleBlur}
               placeholder="you@example.com"
               autoComplete="email"
+              disabled={loading}
+              aria-invalid={!!(touched.email && fieldErrors.email)}
+              aria-describedby={touched.email && fieldErrors.email ? "reg-email-error" : apiErrorId}
             />
           </Field>
 
@@ -235,11 +240,15 @@ const RegisterForm = () => {
                 onBlur={handleBlur}
                 placeholder="Min. 8 characters"
                 autoComplete="new-password"
+                disabled={loading}
+                aria-invalid={!!(touched.password && fieldErrors.password)}
+                aria-describedby={touched.password && fieldErrors.password ? "reg-password-error" : apiErrorId}
               />
               <button
                 type="button"
                 className="toggle-pw"
                 onClick={() => setShowPassword((s) => !s)}
+                disabled={loading}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? "🙈" : "👁"}
@@ -279,6 +288,13 @@ const RegisterForm = () => {
               onBlur={handleBlur}
               placeholder="••••••••"
               autoComplete="new-password"
+              disabled={loading}
+              aria-invalid={!!(touched.password_confirmation && fieldErrors.password_confirmation)}
+              aria-describedby={
+                touched.password_confirmation && fieldErrors.password_confirmation
+                  ? "reg-pwd-confirm-error"
+                  : apiErrorId
+              }
             />
           </Field>
 
@@ -288,7 +304,8 @@ const RegisterForm = () => {
             disabled={loading}
             aria-busy={loading}
           >
-            {loading ? <span className="spinner" aria-hidden="true" /> : "Create Account"}
+            {loading && <span className="spinner" aria-hidden="true" />}
+            {loading ? "Creating account..." : "Create Account"}
           </button>
         </form>
 

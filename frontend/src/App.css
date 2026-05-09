@@ -235,6 +235,11 @@ body {
   background: var(--clr-surface-2);
 }
 
+.form-group input:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
 /* Validation state — error */
 .field-error label { color: var(--clr-error); }
 .field-error input {
@@ -286,6 +291,11 @@ body {
 .toggle-pw:hover {
   color: var(--clr-text);
   background: rgba(255 255 255 / 0.06);
+}
+
+.toggle-pw:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 /* ── 8. Password strength meter ────────────────────────────── */
