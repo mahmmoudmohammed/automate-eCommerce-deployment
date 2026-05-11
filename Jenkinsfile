@@ -37,6 +37,28 @@ pipeline {
             }
         }
 
+                stage('Run Frontend Tests') {
+            steps {
+                script {
+                    echo "Running Jest tests for frontend..."
+                }
+                dir('frontend') {
+                    // Install dependencies and run Jest
+                    sh '''
+                        npm ci
+                        npm test -- --ci --reporters=default --reporters=jest-junit
+                    '''
+                }
+            }
+            post {
+                always {
+                    // Publish test results to Jenkins
+                    junit 'frontend/junit.xml'
+                }
+            }
+        }
+
+
         stage('Docker Login') {
             steps {
                 withCredentials([usernamePassword(
