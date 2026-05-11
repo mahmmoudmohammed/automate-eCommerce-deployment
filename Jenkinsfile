@@ -43,17 +43,10 @@ pipeline {
                     echo "Running Jest tests for frontend..."
                 }
                 dir('frontend') {
-                    // Install dependencies and run Jest
                     sh '''
                         npm ci
-                        npm test -- --ci --reporters=default --reporters=jest-junit
+                        npm test -- --ci
                     '''
-                }
-            }
-            post {
-                always {
-                    // Publish test results to Jenkins
-                    junit 'frontend/junit.xml'
                 }
             }
         }
