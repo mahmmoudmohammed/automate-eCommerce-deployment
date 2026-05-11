@@ -37,7 +37,7 @@ pipeline {
             }
         }
 
-                stage('Run Frontend Tests') {
+        stage('Run Frontend Tests') {
             steps {
                 script {
                     echo "Running Jest tests for frontend..."
