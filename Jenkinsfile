@@ -37,16 +37,30 @@ pipeline {
             }
         }
 
-        stage('Run Frontend Tests') {
+        stage('Run Frontend Tests with Coverage') {
             steps {
                 script {
-                    echo "Running Jest tests for frontend..."
+                    echo "Running Jest tests for frontend with coverage..."
                 }
                 dir('frontend') {
                     sh '''
+                        # Clean install dependencies
                         npm ci
-                        npm test -- --ci
+
+                        # Run all Jest tests in CI mode with coverage enabled
+                        npm test -- --ci --coverage
                     '''
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'frontend/coverage/**', fingerprint: true
+                }
+                failure {
+                    echo "Frontend tests failed!"
+                }
+                success {
+                    echo "Frontend tests passed with coverage collected."
                 }
             }
         }
@@ -69,11 +83,15 @@ pipeline {
         stage('Build Images') {
             steps {
                 sh '''
-                    docker context use desktop-linux
-                    docker build -t $FRONTEND ./frontend
-                    docker build -t $NGINX ./nginx
-                    docker build -t $BACKEND ./backend
-                    docker build -t $WORKER ./worker
+                    docker pull $FRONTEND:latest || true
+                    docker pull $BACKEND:latest || true
+                    docker pull $NGINX:latest || true
+                    docker pull $WORKER:latest || true
+
+                    docker build --cache-from=$FRONTEND:latest -t $FRONTEND:${GIT_COMMIT} ./frontend
+                    docker build --cache-from=$NGINX:latest -t $NGINX:${GIT_COMMIT} ./nginx
+                    docker build --cache-from=$BACKEND:latest -t $BACKEND:${GIT_COMMIT} ./backend
+                    docker build --cache-from=$WORKER:latest -t $WORKER:${GIT_COMMIT} ./worker
                 '''
             }
         }
@@ -81,10 +99,21 @@ pipeline {
         stage('Push Images') {
             steps {
                 sh '''
-                    docker push $FRONTEND
-                    docker push $NGINX
-                    docker push $BACKEND
-                    docker push $WORKER
+                    docker push $FRONTEND:${GIT_COMMIT}
+                    docker push $NGINX:${GIT_COMMIT}
+                    docker push $BACKEND:${GIT_COMMIT}
+                    docker push $WORKER:${GIT_COMMIT}
+
+                    # also tag as latest for caching next builds
+                    docker tag $FRONTEND:${GIT_COMMIT} $FRONTEND:latest
+                    docker tag $NGINX:${GIT_COMMIT} $NGINX:latest
+                    docker tag $BACKEND:${GIT_COMMIT} $BACKEND:latest
+                    docker tag $WORKER:${GIT_COMMIT} $WORKER:latest
+
+                    docker push $FRONTEND:latest
+                    docker push $NGINX:latest
+                    docker push $BACKEND:latest
+                    docker push $WORKER:latest
                 '''
             }
         }
@@ -96,19 +125,19 @@ pipeline {
             steps {
                 withKubeConfig([credentialsId: 'k8s-cluster-creds']) {
                     sh """
-                    echo "Deploying to Kubernetes with raw kubectl..."
+                        echo "Deploying to Kubernetes with raw kubectl..."
 
-                    kubectl set image deployment/frontend frontend=$FRONTEND:${env.GIT_COMMIT} --namespace=${env.BRANCH_NAME}
-                    kubectl set image deployment/backend backend=$BACKEND:${env.GIT_COMMIT} --namespace=${env.BRANCH_NAME}
-                    kubectl set image deployment/nginx nginx=$NGINX:${env.GIT_COMMIT} --namespace=${env.BRANCH_NAME}
-                    kubectl set image deployment/worker worker=$WORKER:${env.GIT_COMMIT} --namespace=${env.BRANCH_NAME}
+                        kubectl set image deployment/frontend frontend=$FRONTEND:${env.GIT_COMMIT} --namespace=${env.BRANCH_NAME}
+                        kubectl set image deployment/backend backend=$BACKEND:${env.GIT_COMMIT} --namespace=${env.BRANCH_NAME}
+                        kubectl set image deployment/nginx nginx=$NGINX:${env.GIT_COMMIT} --namespace=${env.BRANCH_NAME}
+                        kubectl set image deployment/worker worker=$WORKER:${env.GIT_COMMIT} --namespace=${env.BRANCH_NAME}
 
-                    kubectl rollout status deployment/frontend --namespace=${env.BRANCH_NAME}
-                    kubectl rollout status deployment/backend --namespace=${env.BRANCH_NAME}
-                    kubectl rollout status deployment/nginx --namespace=${env.BRANCH_NAME}
-                    kubectl rollout status deployment/worker --namespace=${env.BRANCH_NAME}
+                        kubectl rollout status deployment/frontend --namespace=${env.BRANCH_NAME}
+                        kubectl rollout status deployment/backend --namespace=${env.BRANCH_NAME}
+                        kubectl rollout status deployment/nginx --namespace=${env.BRANCH_NAME}
+                        kubectl rollout status deployment/worker --namespace=${env.BRANCH_NAME}
 
-                    echo "Kubernetes deployment done"
+                        echo "Kubernetes deployment done"
                     """
                 }
             }
@@ -142,7 +171,7 @@ pipeline {
             steps {
                 withAWS(credentials: 'aws-eb-creds', region: 'us-east-1') {
                     sh """
-                    aws s3 cp deploy.zip s3://$S3_BUCKET/deploy-${env.GIT_COMMIT}.zip --acl private
+                        aws s3 cp deploy.zip s3://$S3_BUCKET/deploy-${env.GIT_COMMIT}.zip --acl private
                     """
                 }
             }
@@ -155,16 +184,16 @@ pipeline {
             steps {
                 withAWS(credentials: 'aws-eb-creds', region: 'us-east-1') {
                     sh """
-                    echo "Deploying to Elastic Beanstalk staging..."
-                    aws elasticbeanstalk create-application-version \
-                      --application-name $APPLICATION_NAME \
-                      --version-label ${env.GIT_COMMIT} \
-                      --source-bundle S3Bucket=$S3_BUCKET,S3Key=deploy-${env.GIT_COMMIT}.zip
+                        echo "Deploying to Elastic Beanstalk staging..."
+                        aws elasticbeanstalk create-application-version \
+                        --application-name $APPLICATION_NAME \
+                        --version-label ${env.GIT_COMMIT} \
+                        --source-bundle S3Bucket=$S3_BUCKET,S3Key=deploy-${env.GIT_COMMIT}.zip
 
-                    aws elasticbeanstalk update-environment \
-                      --environment-name $STAGING_ENV \
-                      --version-label ${env.GIT_COMMIT}
-                    echo "Staging EB deployment done"
+                        aws elasticbeanstalk update-environment \
+                        --environment-name $STAGING_ENV \
+                        --version-label ${env.GIT_COMMIT}
+                        echo "Staging EB deployment done"
                     """
                 }
             }
@@ -186,11 +215,11 @@ pipeline {
             steps {
                 withAWS(credentials: 'aws-eb-creds', region: 'us-east-1') {
                     sh """
-                    echo "Deploying to Elastic Beanstalk production..."
-                    aws elasticbeanstalk update-environment \
-                      --environment-name $PROD_ENV \
-                      --version-label ${env.GIT_COMMIT}
-                    echo "Production EB deployment done"
+                        echo "Deploying to Elastic Beanstalk production..."
+                        aws elasticbeanstalk update-environment \
+                        --environment-name $PROD_ENV \
+                        --version-label ${env.GIT_COMMIT}
+                        echo "Production EB deployment done"
                     """
                 }
             }

@@ -1,0 +1,50 @@
+CI/CD Pipeline — From Code to Deployment
+    
+    What Is CI/CD?
+        Continuous Integration (CI) and Continuous Deployment (CD) automate how software moves from development to production.
+        Instead of doing everything manually, Jenkins runs tests, builds Docker images, and deploys your app — saving time and reducing errors.
+     
+    Step 1: Code & Test
+        Write & Test Code
+            Developers push code to Git.
+            Jenkins checks the branch (dev or main).
+            Automated tests verify the frontend. 
+        Goal: Catch bugs early before building.
+
+    Step 2: Build & Package
+        Build Docker Images
+            Jenkins builds containers for frontend, backend, nginx, and worker.
+            Images are pushed to Docker Hub.
+        Bundle the App
+            Jenkins zips everything into a deployment package.
+        Goal: Create consistent, portable builds.
+
+    Step 3: Deploy to Staging
+        Automatic Deployment
+            If on the dev branch, Jenkins deploys to AWS Elastic Beanstalk staging.
+            The team tests the app safely before release.
+        Goal: Verify stability and performance.
+
+    Step 4: Deploy to Production
+        Manual Approval
+            Jenkins pauses for human confirmation.
+        Launch to Live Users
+            Once approved, deployment goes to production.
+        Goal: Protect live systems from untested code.
+
+    Step 5: Cleanup & Notifications
+        System Cleanup
+            Jenkins removes unused Docker resources.
+        Team Notifications
+            Success or failure messages are sent automatically.
+        Goal: Keep systems tidy and teams informed.
+
+    Why It Matters
+        Saves Time: Automation replaces manual work.
+        Reduces Errors: Tests catch problems early.
+        Ensures Safety: Approval protects production.
+
+    Summary
+        The pipeline follows a clear path:
+            Code → Test → Build → Deploy → Notify 
+        Each step ensures your app moves smoothly from idea to live deployment.
