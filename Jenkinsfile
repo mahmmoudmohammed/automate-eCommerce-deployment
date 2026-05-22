@@ -10,6 +10,7 @@ pipeline {
         NGINX    = "${DOCKER_USER}/nginx"
         BACKEND  = "${DOCKER_USER}/backend"
         WORKER   = "${DOCKER_USER}/worker"
+        ORDER_PROCESS = "${DOCKER_USER}/order-process"
 
         APPLICATION_NAME = "automate-eCommerce-deployment"
         STAGING_ENV = "automate-eCommerce-deployment-staging"
@@ -87,11 +88,13 @@ pipeline {
                     docker pull $BACKEND:latest || true
                     docker pull $NGINX:latest || true
                     docker pull $WORKER:latest || true
+                    docker pull $ORDER_PROCESS:latest || true
 
                     docker build --cache-from=$FRONTEND:latest -t $FRONTEND:${GIT_COMMIT} ./frontend
                     docker build --cache-from=$NGINX:latest -t $NGINX:${GIT_COMMIT} ./nginx
                     docker build --cache-from=$BACKEND:latest -t $BACKEND:${GIT_COMMIT} ./backend
                     docker build --cache-from=$WORKER:latest -t $WORKER:${GIT_COMMIT} ./worker
+                    docker build --cache-from=$ORDER_PROCESS:latest -t $ORDER_PROCESS:${GIT_COMMIT} ./order-process
                 '''
             }
         }
@@ -103,17 +106,20 @@ pipeline {
                     docker push $NGINX:${GIT_COMMIT}
                     docker push $BACKEND:${GIT_COMMIT}
                     docker push $WORKER:${GIT_COMMIT}
+                    docker push $ORDER_PROCESS:${GIT_COMMIT}
 
                     # also tag as latest for caching next builds
                     docker tag $FRONTEND:${GIT_COMMIT} $FRONTEND:latest
                     docker tag $NGINX:${GIT_COMMIT} $NGINX:latest
                     docker tag $BACKEND:${GIT_COMMIT} $BACKEND:latest
                     docker tag $WORKER:${GIT_COMMIT} $WORKER:latest
+                    docker tag $ORDER_PROCESS:${GIT_COMMIT} $ORDER_PROCESS:latest
 
                     docker push $FRONTEND:latest
                     docker push $NGINX:latest
                     docker push $BACKEND:latest
                     docker push $WORKER:latest
+                    docker push $ORDER_PROCESS:latest
                 '''
             }
         }
@@ -127,99 +133,15 @@ pipeline {
                     sh """
                         echo "Deploying to Kubernetes with raw kubectl..."
 
-                        kubectl set image deployment/frontend frontend=$FRONTEND:${env.GIT_COMMIT} --namespace=${env.BRANCH_NAME}
-                        kubectl set image deployment/backend backend=$BACKEND:${env.GIT_COMMIT} --namespace=${env.BRANCH_NAME}
-                        kubectl set image deployment/nginx nginx=$NGINX:${env.GIT_COMMIT} --namespace=${env.BRANCH_NAME}
-                        kubectl set image deployment/worker worker=$WORKER:${env.GIT_COMMIT} --namespace=${env.BRANCH_NAME}
+                        kubectl set image deployment/frontend frontend=$FRONTEND:${env.GIT_COMMIT} --namespace=ecommerce
+                        kubectl set image deployment/backend backend=$BACKEND:${env.GIT_COMMIT} --namespace=ecommerce
+                        kubectl set image deployment/order-process order-process=$ORDER_PROCESS:${env.GIT_COMMIT} --namespace=ecommerce
 
-                        kubectl rollout status deployment/frontend --namespace=${env.BRANCH_NAME}
-                        kubectl rollout status deployment/backend --namespace=${env.BRANCH_NAME}
-                        kubectl rollout status deployment/nginx --namespace=${env.BRANCH_NAME}
-                        kubectl rollout status deployment/worker --namespace=${env.BRANCH_NAME}
+                        kubectl rollout status deployment/frontend --namespace=ecommerce
+                        kubectl rollout status deployment/backend --namespace=ecommerce
+                        kubectl rollout status deployment/order-process --namespace=ecommerce
 
                         echo "Kubernetes deployment done"
-                    """
-                }
-            }
-        }
-
-        stage('Package Artifacts') {
-            steps {
-                sh '''
-                    mkdir -p artifacts
-                    tar -czf artifacts/frontend.tar.gz ./frontend
-                    tar -czf artifacts/backend.tar.gz ./backend
-                    tar -czf artifacts/nginx.tar.gz ./nginx
-                    tar -czf artifacts/worker.tar.gz ./worker
-                '''
-            }
-        }
-
-        stage('Store Artifacts') {
-            steps {
-                archiveArtifacts artifacts: 'artifacts/*.tar.gz', fingerprint: true
-            }
-        }
-
-        stage('Create Deployment Package') {
-            steps {
-                sh 'zip -r deploy.zip . -x "*.git*"'
-            }
-        }
-
-        stage('Upload to S3') {
-            steps {
-                withAWS(credentials: 'aws-eb-creds', region: 'us-east-1') {
-                    sh """
-                        aws s3 cp deploy.zip s3://$S3_BUCKET/deploy-${env.GIT_COMMIT}.zip --acl private
-                    """
-                }
-            }
-        }
-
-        stage('Deploy to Staging') {
-            when {
-                expression { env.BRANCH_NAME == 'dev' }
-            }
-            steps {
-                withAWS(credentials: 'aws-eb-creds', region: 'us-east-1') {
-                    sh """
-                        echo "Deploying to Elastic Beanstalk staging..."
-                        aws elasticbeanstalk create-application-version \
-                        --application-name $APPLICATION_NAME \
-                        --version-label ${env.GIT_COMMIT} \
-                        --source-bundle S3Bucket=$S3_BUCKET,S3Key=deploy-${env.GIT_COMMIT}.zip
-
-                        aws elasticbeanstalk update-environment \
-                        --environment-name $STAGING_ENV \
-                        --version-label ${env.GIT_COMMIT}
-                        echo "Staging EB deployment done"
-                    """
-                }
-            }
-        }
-
-        stage('Approval for Production') {
-            when {
-                expression { env.BRANCH_NAME == 'main' }
-            }
-            steps {
-                input message: "Deploy to production?", ok: "Deploy"
-            }
-        }
-
-        stage('Deploy to Production') {
-            when {
-                expression { env.BRANCH_NAME == 'main' }
-            }
-            steps {
-                withAWS(credentials: 'aws-eb-creds', region: 'us-east-1') {
-                    sh """
-                        echo "Deploying to Elastic Beanstalk production..."
-                        aws elasticbeanstalk update-environment \
-                        --environment-name $PROD_ENV \
-                        --version-label ${env.GIT_COMMIT}
-                        echo "Production EB deployment done"
                     """
                 }
             }
