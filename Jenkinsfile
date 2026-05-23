@@ -29,7 +29,7 @@ pipeline {
             }
         }
 
-        // ── Build frontend up to the `test` stage ──────────────────────────
+        // ────────────────────────── Build `test` stage ──────────────────────────
         stage('Build & Test Frontend') {
             steps {
                 sh '''
@@ -46,7 +46,39 @@ pipeline {
             }
         }
 
-        // ── Build all production images ─────────────────────────────────────
+        stage('Build & Test Backend') {
+            steps {
+                sh '''
+                    docker build \
+                        --target test \
+                        --cache-from $BACKEND:latest \
+                        -t $BACKEND:test \
+                        ./backend
+                '''
+            }
+            post {
+                success { echo "Backend tests passed." }
+                failure { echo "Backend tests failed — aborting." }
+            }
+        }
+
+        stage('Build & Test Order-Process') {
+            steps {
+                sh '''
+                    docker build \
+                        --target test \
+                        --cache-from $ORDER_PROCESS:latest \
+                        -t $ORDER_PROCESS:test \
+                        ./order-process
+                '''
+            }
+            post {
+                success { echo "Order-process tests passed." }
+                failure { echo "Order-process tests failed — aborting." }
+            }
+        }
+
+        // ────────────────────────── Build all production images ─────────────────────────────────────
         stage('Build Production Images') {
             steps {
                 sh '''
@@ -65,7 +97,7 @@ pipeline {
             }
         }
 
-        // ── Push to Docker Hub ──────────────────────────────────────────────
+        // ────────────────────────── Push to Docker Hub ──────────────────────────────────────────────
         stage('Push Images') {
             steps {
                 withCredentials([usernamePassword(
