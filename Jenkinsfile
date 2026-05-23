@@ -29,7 +29,7 @@ pipeline {
             }
         }
 
-        // ────────────────────────── Build `test` stage ──────────────────────────
+        // ────────────────────────── Build `test` stage and run tests ──────────────────────────
         stage('Build & Test Frontend') {
             steps {
                 sh '''
