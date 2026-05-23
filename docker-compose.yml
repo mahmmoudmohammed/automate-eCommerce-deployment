@@ -9,6 +9,7 @@ services:
    depends_on: 
      - backend
      - frontend
+     - order-process
    restart: always
    build: 
      dockerfile: Dockerfile.dev
@@ -47,4 +48,19 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379    
+  order-process:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./order-process
+    volumes:
+      - ./order-process:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=postgres
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres_password
 
