@@ -1,21 +1,13 @@
 pipeline {
-    agent {
-        label 'docker'
-    }
+    agent { label 'docker' }
 
     environment {
-        DOCKER_USER = "ma7moudsharqawi"
-
-        FRONTEND = "${DOCKER_USER}/frontend"
-        NGINX    = "${DOCKER_USER}/nginx"
-        BACKEND  = "${DOCKER_USER}/backend"
-        WORKER   = "${DOCKER_USER}/worker"
-        ORDER_PROCESS = "${DOCKER_USER}/order-process"
-
-        APPLICATION_NAME = "automate-eCommerce-deployment"
-        STAGING_ENV = "automate-eCommerce-deployment-staging"
-        PROD_ENV = "automate-eCommerce-deployment-env"
-        S3_BUCKET = "s3-eb-deployments-bucket"
+        DOCKER_USER     = "ma7moudsharqawi"
+        FRONTEND        = "${DOCKER_USER}/frontend"
+        NGINX           = "${DOCKER_USER}/nginx"
+        BACKEND         = "${DOCKER_USER}/backend"
+        WORKER          = "${DOCKER_USER}/worker"
+        ORDER_PROCESS   = "${DOCKER_USER}/order-process"
     }
 
     stages {
@@ -28,46 +20,53 @@ pipeline {
         stage('Validate Branch') {
             steps {
                 script {
-                    def branch = env.BRANCH_NAME ?: env.GIT_BRANCH
-                    branch = branch?.replace("origin/", "")
-                    echo "Running on branch: ${branch}"
-                    if (!(branch in ["dev", "main"])) {
-                        error("This pipeline runs only on dev or main branches. Current: ${branch}")
+                    def branch = (env.BRANCH_NAME ?: env.GIT_BRANCH)?.replace("origin/", "")
+                    echo "Branch: ${branch}"
+                    if (!(branch in ['dev', 'main'])) {
+                        error("Pipeline only runs on dev or main. Current: ${branch}")
                     }
                 }
             }
         }
 
-        stage('Run Frontend Tests with Coverage') {
+        // ── Build frontend up to the `test` stage ──────────────────────────
+        stage('Build & Test Frontend') {
             steps {
-                script {
-                    echo "Running Jest tests for frontend with coverage..."
-                }
-                dir('frontend') {
-                    sh '''
-                        # Clean install dependencies
-                        npm ci
-
-                        # Run all Jest tests in CI mode with coverage enabled
-                        npm test -- --ci --coverage
-                    '''
-                }
+                sh '''
+                    docker build \
+                        --target test \
+                        --cache-from $FRONTEND:latest \
+                        -t $FRONTEND:test \
+                        ./frontend
+                '''
             }
             post {
-                always {
-                    archiveArtifacts artifacts: 'frontend/coverage/**', fingerprint: true
-                }
-                failure {
-                    echo "Frontend tests failed!"
-                }
-                success {
-                    echo "Frontend tests passed with coverage collected."
-                }
+                success { echo "All frontend tests passed." }
+                failure { echo "Frontend tests failed — aborting pipeline." }
             }
         }
 
+        // ── Build all production images ─────────────────────────────────────
+        stage('Build Production Images') {
+            steps {
+                sh '''
+                    docker pull $FRONTEND:latest      || true
+                    docker pull $BACKEND:latest       || true
+                    docker pull $NGINX:latest         || true
+                    docker pull $WORKER:latest        || true
+                    docker pull $ORDER_PROCESS:latest || true
 
-        stage('Docker Login') {
+                    docker build --cache-from=$FRONTEND:latest      -t $FRONTEND:${GIT_COMMIT}      ./frontend
+                    docker build --cache-from=$NGINX:latest         -t $NGINX:${GIT_COMMIT}         ./nginx
+                    docker build --cache-from=$BACKEND:latest       -t $BACKEND:${GIT_COMMIT}       ./backend
+                    docker build --cache-from=$WORKER:latest        -t $WORKER:${GIT_COMMIT}        ./worker
+                    docker build --cache-from=$ORDER_PROCESS:latest -t $ORDER_PROCESS:${GIT_COMMIT} ./order-process
+                '''
+            }
+        }
+
+        // ── Push to Docker Hub ──────────────────────────────────────────────
+        stage('Push Images') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'docker-hub-creds',
@@ -76,51 +75,26 @@ pipeline {
                 )]) {
                     sh '''
                         echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+
+                        docker push $FRONTEND:${GIT_COMMIT}
+                        docker push $NGINX:${GIT_COMMIT}
+                        docker push $BACKEND:${GIT_COMMIT}
+                        docker push $WORKER:${GIT_COMMIT}
+                        docker push $ORDER_PROCESS:${GIT_COMMIT}
+
+                        docker tag $FRONTEND:${GIT_COMMIT}      $FRONTEND:latest
+                        docker tag $NGINX:${GIT_COMMIT}         $NGINX:latest
+                        docker tag $BACKEND:${GIT_COMMIT}       $BACKEND:latest
+                        docker tag $WORKER:${GIT_COMMIT}        $WORKER:latest
+                        docker tag $ORDER_PROCESS:${GIT_COMMIT} $ORDER_PROCESS:latest
+
+                        docker push $FRONTEND:latest
+                        docker push $NGINX:latest
+                        docker push $BACKEND:latest
+                        docker push $WORKER:latest
+                        docker push $ORDER_PROCESS:latest
                     '''
                 }
-            }
-        }
-
-        stage('Build Images') {
-            steps {
-                sh '''
-                    docker pull $FRONTEND:latest || true
-                    docker pull $BACKEND:latest || true
-                    docker pull $NGINX:latest || true
-                    docker pull $WORKER:latest || true
-                    docker pull $ORDER_PROCESS:latest || true
-
-                    docker build --cache-from=$FRONTEND:latest -t $FRONTEND:${GIT_COMMIT} ./frontend
-                    docker build --cache-from=$NGINX:latest -t $NGINX:${GIT_COMMIT} ./nginx
-                    docker build --cache-from=$BACKEND:latest -t $BACKEND:${GIT_COMMIT} ./backend
-                    docker build --cache-from=$WORKER:latest -t $WORKER:${GIT_COMMIT} ./worker
-                    docker build --cache-from=$ORDER_PROCESS:latest -t $ORDER_PROCESS:${GIT_COMMIT} ./order-process
-                '''
-            }
-        }
-
-        stage('Push Images') {
-            steps {
-                sh '''
-                    docker push $FRONTEND:${GIT_COMMIT}
-                    docker push $NGINX:${GIT_COMMIT}
-                    docker push $BACKEND:${GIT_COMMIT}
-                    docker push $WORKER:${GIT_COMMIT}
-                    docker push $ORDER_PROCESS:${GIT_COMMIT}
-
-                    # also tag as latest for caching next builds
-                    docker tag $FRONTEND:${GIT_COMMIT} $FRONTEND:latest
-                    docker tag $NGINX:${GIT_COMMIT} $NGINX:latest
-                    docker tag $BACKEND:${GIT_COMMIT} $BACKEND:latest
-                    docker tag $WORKER:${GIT_COMMIT} $WORKER:latest
-                    docker tag $ORDER_PROCESS:${GIT_COMMIT} $ORDER_PROCESS:latest
-
-                    docker push $FRONTEND:latest
-                    docker push $NGINX:latest
-                    docker push $BACKEND:latest
-                    docker push $WORKER:latest
-                    docker push $ORDER_PROCESS:latest
-                '''
             }
         }
 
@@ -131,17 +105,13 @@ pipeline {
             steps {
                 withKubeConfig([credentialsId: 'k8s-cluster-creds']) {
                     sh """
-                        echo "Deploying to Kubernetes with raw kubectl..."
-
-                        kubectl set image deployment/frontend frontend=$FRONTEND:${env.GIT_COMMIT} --namespace=ecommerce
-                        kubectl set image deployment/backend backend=$BACKEND:${env.GIT_COMMIT} --namespace=ecommerce
+                        kubectl set image deployment/frontend      frontend=$FRONTEND:${env.GIT_COMMIT}           --namespace=ecommerce
+                        kubectl set image deployment/backend       backend=$BACKEND:${env.GIT_COMMIT}             --namespace=ecommerce
                         kubectl set image deployment/order-process order-process=$ORDER_PROCESS:${env.GIT_COMMIT} --namespace=ecommerce
 
-                        kubectl rollout status deployment/frontend --namespace=ecommerce
-                        kubectl rollout status deployment/backend --namespace=ecommerce
+                        kubectl rollout status deployment/frontend      --namespace=ecommerce
+                        kubectl rollout status deployment/backend       --namespace=ecommerce
                         kubectl rollout status deployment/order-process --namespace=ecommerce
-
-                        echo "Kubernetes deployment done"
                     """
                 }
             }
@@ -151,15 +121,12 @@ pipeline {
     post {
         always {
             sh '''
-                docker logout || true
-                docker system prune -f || true
+                docker rmi $FRONTEND:test || true
+                docker logout             || true
+                docker system prune -f    || true
             '''
         }
-        success {
-            echo "Pipeline completed successfully"
-        }
-        failure {
-            echo "Pipeline failed"
-        }
+        success { echo "Pipeline completed successfully." }
+        failure { echo "Pipeline failed." }
     }
 }
