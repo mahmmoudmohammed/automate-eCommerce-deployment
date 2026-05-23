@@ -153,7 +153,6 @@ pipeline {
     post {
         always {
             sh '''
-                docker rmi $FRONTEND:test || true
                 docker logout             || true
                 docker system prune -f    || true
             '''
