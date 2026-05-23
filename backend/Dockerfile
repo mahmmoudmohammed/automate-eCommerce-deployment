@@ -5,11 +5,8 @@ RUN npm ci
 
 FROM deps AS test
 COPY . .
-ENV CI=true
-RUN npm test -- --ci --coverage
+RUN node --test --experimental-test-coverage tests/
 
-
-FROM deps AS builder
-RUN npm install
+FROM deps AS production
 COPY . .
 CMD [ "npm", "run", "start" ]
